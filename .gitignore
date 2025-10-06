@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Builds / caches
+build/
+dist/
+.next/
+out/
+.cache/
+coverage/
+
+# Environment & config
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

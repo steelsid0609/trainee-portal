@@ -1,0 +1,19 @@
+/* global reset */
+* { box-sizing: border-box; }
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: transparent;
+  overflow: hidden; /* prevents document-level scrollbars */
+}
+
+/* If you want inner content to be scrollable (instead of whole page),
+   give the content container its own scroll: */
+.app-inner-scroll {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  overflow: auto; /* enable scroll only inside this container */
+}
