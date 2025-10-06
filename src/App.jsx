@@ -3,12 +3,16 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword"; // <-- semicolon added
+import ForgotPassword from "./pages/ForgotPassword";
 import StudentProfile from "./pages/StudentProfile";
 import FinishVerify from "./pages/FinishVerify";
-import AdminDashboard from "./pages/AdminPanel"; // <-- make sure this path exists
+import AdminDashboard from "./pages/AdminPanel";
 import AdminRoute from "./routes/AdminRoute";
 import bgImage from "./assets/bg.jpg";
+
+/* ✅ Toastify imports */
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function NotFound() {
   return <div style={{ padding: 32 }}>404 – Page not found</div>;
@@ -30,6 +34,7 @@ export default function App() {
           backgroundRepeat: "no-repeat",
         }}
       />
+
       {/* Foreground app area */}
       <div
         className="app-inner-scroll"
@@ -57,21 +62,18 @@ export default function App() {
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+
+        {/* ✅ Toast container (shows pop-ups at top-right) */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          pauseOnHover
+          theme="colored"
+        />
       </div>
     </>
   );
 }
-
-
-/*export default function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/auth" element={<AuthRequest />} />
-      <Route path="/finishSignIn" element={<FinishSignIn />} />
-      <Route path="/student/profile" element={<StudentProfile />} />
-      <Route path="/admin" element={<AdminPanel />} />
-    </Routes>
-  );
-}
-*/

@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { toast } from "react-toastify";
 import logo from "../assets/transparent-logo.png";
 
 export default function Login() {
@@ -82,7 +83,7 @@ export default function Login() {
             url: `${window.location.origin}/finishVerify`,
             handleCodeInApp: true,
           });
-          alert("Verification email sent. Please check your inbox.");
+          toast.success("Verification email sent. Please check your inbox.");
         }
         await auth.signOut();
         setLoading(false);

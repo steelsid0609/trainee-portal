@@ -1,4 +1,3 @@
-// src/pages/StudentDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { signOut, sendPasswordResetEmail } from "firebase/auth";
@@ -13,6 +12,7 @@ import {
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/transparent-logo.png";
 
@@ -56,7 +56,7 @@ export default function StudentDashboard() {
         await loadApplications(u.uid);
       } catch (err) {
         console.error("Error in dashboard bootstrap:", err);
-        alert("Error loading dashboard: " + (err.message || err.code || err));
+        toast.error("Error loading dashboard: " + (err.message || err.code || err));
       } finally {
         setLoading(false);
       }
@@ -74,9 +74,9 @@ export default function StudentDashboard() {
     } catch (err) {
       console.error("Failed to load applications:", err);
       if (err.code === "permission-denied") {
-        alert("You do not have permission to read applications. Check Firestore rules.");
+        toast.error("You do not have permission to read applications. Check Firestore rules.");
       } else {
-        alert("Failed to load applications: " + (err.message || err.code));
+        toast.error("Failed to load applications: " + (err.message || err.code));
       }
     }
   }
@@ -87,13 +87,13 @@ export default function StudentDashboard() {
   }
 
   async function handleChangePassword() {
-    if (!user?.email) return alert("No email found for password reset.");
+    if (!user?.email) return toast.error("No email found for password reset.");
     try {
       await sendPasswordResetEmail(auth, user.email);
-      alert("Password reset email sent. Please check your inbox.");
+      toast.success("Password reset email sent. Please check your inbox.");
     } catch (err) {
       console.error("Failed to send password reset:", err);
-      alert("Failed to send password reset: " + (err.message || err.code));
+      toast.error("Failed to send password reset: " + (err.message || err.code));
     }
   }
 
@@ -160,12 +160,12 @@ export default function StudentDashboard() {
               <h2 style={{ color: "#333" }}>
                 Hey, <span style={{ color: "#006400" }}>{profile?.fullName}</span>
               </h2>
-              <p>Welcome to your Internship Dashboard</p>
+              <p>Welcome to Dashboard</p>
 
               {!showApplyForm ? (
                 <>
                   <button onClick={() => setShowApplyForm(true)} style={applyBtn}>
-                    ➕ Apply for Internship
+                    ➕ Apply
                   </button>
 
                   {applications.length === 0 ? (
@@ -176,8 +176,7 @@ export default function StudentDashboard() {
                       <table style={table}>
                         <thead>
                           <tr>
-                            <th style={thtd}>Position</th>
-                            <th style={thtd}>Description</th>
+                            <th style={thtd}>Type</th>                        
                             <th style={thtd}>Applied On</th>
                             <th style={thtd}>Status</th>
                           </tr>
@@ -185,8 +184,7 @@ export default function StudentDashboard() {
                         <tbody>
                           {applications.map((app) => (
                             <tr key={app.id}>
-                              <td style={thtd}>{app.position}</td>
-                              <td style={thtd}>{app.description}</td>
+                              <td style={thtd}>{app.internshipType}</td>
                               <td style={thtd}>
                                 {app.createdAt?.toDate
                                   ? app.createdAt.toDate().toLocaleDateString()
@@ -269,11 +267,11 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
         setForm((f) => ({ ...f, city: po.District || "", state: po.State || "" }));
       } else {
         setForm((f) => ({ ...f, city: "", state: "" }));
-        alert("Pincode not found. Please verify or enter City/State manually.");
+        toast.warn("Pincode not found. Please verify or enter City/State manually.");
       }
     } catch (err) {
       console.error("Pincode lookup failed:", err);
-      alert("Failed to auto-fill city/state from pincode. You can enter them manually.");
+      toast.error("Failed to auto-fill city/state from pincode. You can enter them manually.");
     } finally {
       setPincodeLoading(false);
     }
@@ -281,9 +279,9 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.fullName.trim()) return alert("Please enter your full name.");
-    if (!/^\d{10}$/.test(form.phone)) return alert("Please enter a valid 10-digit phone number.");
-    if (!/^\d{6}$/.test(form.pincode)) return alert("Please enter a valid 6-digit pincode.");
+    if (!form.fullName.trim()) return toast.error("Please enter your full name.");
+    if (!/^\d{10}$/.test(form.phone)) return toast.error("Please enter a valid 10-digit phone number.");
+    if (!/^\d{6}$/.test(form.pincode)) return toast.error("Please enter a valid 6-digit pincode.");
 
     setLoading(true);
     try {
@@ -301,14 +299,14 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
       };
 
       await setDoc(userRef, payload, { merge: true });
-      alert("Profile saved. You can now use the dashboard.");
+      toast.success("Profile saved. You can now use the dashboard.");
       if (onCompleted) await onCompleted();
     } catch (err) {
       console.error("Failed to save basic info:", err);
       if (err.code === "permission-denied") {
-        alert("You do not have permission to save profile. Check Firestore rules.");
+        toast.error("You do not have permission to save profile. Check Firestore rules.");
       } else {
-        alert("Failed to save profile: " + (err.message || err.code));
+        toast.warn("Failed to save profile: " + (err.message || err.code));
       }
     } finally {
       setLoading(false);
@@ -428,11 +426,11 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
         setForm((f) => ({ ...f, city: po.District || "", state: po.State || "" }));
       } else {
         setForm((f) => ({ ...f, city: "", state: "" }));
-        alert("Pincode not found. Please verify or enter City/State manually.");
+        toast.warn("Pincode not found. Please verify or enter City/State manually.");
       }
     } catch (e) {
       console.error("Pincode lookup failed:", e);
-      alert("Failed to auto-fill city/state from pincode. You can enter them manually.");
+      toast.error("Failed to auto-fill city/state from pincode. You can enter them manually.");
     } finally {
       setPincodeLoading(false);
     }
@@ -440,9 +438,9 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.fullName.trim()) return alert("Please enter your full name.");
-    if (!/^\d{10}$/.test(form.phone)) return alert("Please enter a valid 10-digit phone number.");
-    if (!/^\d{6}$/.test(form.pincode)) return alert("Please enter a valid 6-digit pincode.");
+    if (!form.fullName.trim()) return toast.error("Please enter your full name.");
+    if (!/^\d{10}$/.test(form.phone)) return toast.error("Please enter a valid 10-digit phone number.");
+    if (!/^\d{6}$/.test(form.pincode)) return toast.error("Please enter a valid 6-digit pincode.");
 
     setSaving(true);
     try {
@@ -460,15 +458,15 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
       // merge so we never touch role/status fields (passes your rules)
       await setDoc(userRef, payload, { merge: true });
 
-      alert("Profile updated.");
+      toast.success("Profile updated.");
       if (onSaved) await onSaved();
       setShowEdit(false);
     } catch (err) {
       console.error("Failed to update profile:", err);
       if (err.code === "permission-denied") {
-        alert("You do not have permission to update this profile. Check Firestore rules.");
+        toast.warn("You do not have permission to update this profile. Check Firestore rules.");
       } else {
-        alert("Failed to update profile: " + (err.message || err.code));
+        toast.error("Failed to update profile: " + (err.message || err.code));
       }
     } finally {
       setSaving(false);
@@ -566,34 +564,148 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
   );
 }
 
-/* ---------- APPLY FORM ---------- */
+/* ---------- APPLY FORM (master colleges + save "Other" to colleges_temp) ---------- */
 function ApplyForm({ user, profile, setShowApplyForm, reload }) {
-  const [form, setForm] = useState({ position: "", description: "" });
+  const [form, setForm] = useState({
+    fullName: profile?.fullName || "",
+    phone: profile?.phone || "",
+    email: user?.email || "",
+    bloodGroup: "",
+    collegeSearch: "",
+    collegeSelected: "", // chosen college name from master or "Other"
+    college: { name: "", address: "", pincode: "", contact: "" }, // used when "Other"
+    internshipType: "Internship",
+    startDate: "",
+    endDate: "",
+    receivedConfirmation: "No",
+    confirmationNumber: "",
+  });
+
   const [submitting, setSubmitting] = useState(false);
+  const [showOtherCollege, setShowOtherCollege] = useState(false);
+  const [masterColleges, setMasterColleges] = useState([]);
+  const [loadingColleges, setLoadingColleges] = useState(true);
+
+  // Load colleges_master from Firestore on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoadingColleges(true);
+      try {
+        const snap = await getDocs(collection(db, "colleges_master"));
+        const cols = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          cols.push({ id: d.id, name: data.name || data.collegeName || "" });
+        });
+        if (!cancelled) {
+          setMasterColleges(cols);
+        }
+      } catch (err) {
+        console.error("Failed to load colleges_master:", err);
+        if (!cancelled) setMasterColleges([]);
+      } finally {
+        if (!cancelled) setLoadingColleges(false);
+      }
+    }
+    load();
+    return () => (cancelled = true);
+  }, []);
+
+  useEffect(() => {
+    setShowOtherCollege(form.collegeSelected === "Other");
+  }, [form.collegeSelected]);
+
+  const filteredColleges = masterColleges
+    .filter((c) => c.name.toLowerCase().includes(form.collegeSearch.toLowerCase()))
+    .slice(0, 50);
+
+  function handleCollegeSelect(name) {
+    setForm((f) => ({
+      ...f,
+      collegeSearch: name,
+      collegeSelected: name,
+      college: name === "Other" ? f.college : { ...f.college, name },
+    }));
+  }
+
+  function validate() {
+    if (!form.fullName.trim()) return "Full name is required.";
+    if (!/^\d{10}$/.test(form.phone)) return "Enter a valid 10-digit mobile number.";
+    if (!form.email || !/^\S+@\S+\.\S+$/.test(form.email)) return "Enter a valid email address.";
+    if (!form.bloodGroup) return "Please select your blood group.";
+    if (!form.collegeSelected) return "Please select or provide your college.";
+    if (form.collegeSelected === "Other") {
+      if (!form.college.name.trim()) return "Please enter your college name.";
+      if (!form.college.address.trim()) return "Please enter your college address.";
+      if (!/^\d{6}$/.test(form.college.pincode)) return "Enter a valid 6-digit college pincode.";
+      if (!/^\d{7,15}$/.test(form.college.contact.replace(/\D/g, "")))
+        return "Enter a valid college contact number (7-15 digits).";
+    }
+    if (!form.internshipType) return "Please select the internship type.";
+    if (!form.startDate) return "Please select a start date.";
+    if (!form.endDate) return "Please select an end date.";
+    if (new Date(form.endDate) < new Date(form.startDate))
+      return "End date cannot be before start date.";
+    if (!form.receivedConfirmation) return "Please indicate if you've received confirmation.";
+    if (form.receivedConfirmation === "Yes" && !form.confirmationNumber.trim())
+      return "Please enter the confirmation number.";
+    return null;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const err = validate();
+    if (err) return toast.error(err);
+
     setSubmitting(true);
     try {
-      await addDoc(collection(db, "applications"), {
-        createdBy: user.uid, // matches rules
-        studentName: profile?.fullName || "",
-        email: user.email,
-        phone: profile?.phone || "",
-        position: form.position,
-        description: form.description,
-        createdAt: serverTimestamp(),
-      });
+      let tempCollegeRef = null;
+      if (form.collegeSelected === "Other") {
+        const collegePayload = {
+          name: form.college.name.trim(),
+          address: form.college.address.trim(),
+          pincode: form.college.pincode,
+          contact: form.college.contact,
+          submittedBy: user.uid,
+          submittedAt: serverTimestamp(),
+          status: "pending",
+        };
+        const colDoc = await addDoc(collection(db, "colleges_temp"), collegePayload);
+        tempCollegeRef = { id: colDoc.id, path: `colleges_temp/${colDoc.id}` };
+      }
 
-      alert("Application submitted successfully!");
+      const collegeInfo =
+        form.collegeSelected === "Other"
+          ? { name: form.college.name.trim(), tempCollegeRef }
+          : { name: form.collegeSelected };
+
+      const payload = {
+        createdBy: user.uid,
+        studentName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        bloodGroup: form.bloodGroup,
+        college: collegeInfo,
+        internshipType: form.internshipType,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        receivedConfirmation: form.receivedConfirmation === "Yes",
+        confirmationNumber: form.receivedConfirmation === "Yes" ? form.confirmationNumber : "",
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(db, "applications"), payload);
+
+      toast.success("Application submitted successfully!");
       setShowApplyForm(false);
-      await reload(user.uid);
+      if (reload) await reload(user.uid);
     } catch (err) {
       console.error("Failed to submit application:", err);
       if (err.code === "permission-denied") {
-        alert("You do not have permission to submit applications. Check Firestore rules.");
+        toast.warn("You do not have permission to submit applications. Check Firestore rules.");
       } else {
-        alert("Failed to submit application: " + (err.message || err.code));
+        toast.error("Failed to submit application: " + (err.message || err.code));
       }
     } finally {
       setSubmitting(false);
@@ -602,38 +714,199 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
 
   return (
     <div style={card}>
-      <h3>Apply for Internship</h3>
+      <h3>Apply for Internship / OJT / VT</h3>
       <form onSubmit={handleSubmit}>
-        <label>Position</label>
-        <input
+        <label>Full Name</label>
+        <input style={{ ...inputStyle, width: "570px" }} value={form.fullName} readOnly />
+
+        <label>Mobile number</label>
+        <input style={{ ...inputStyle, width: "80px" }} value={form.phone} readOnly />
+
+        <label>Email</label>
+        <input style={{ ...inputStyle, width: "300px" }} value={form.email} readOnly />
+
+        <label>Blood Group</label>
+        <select
           required
-          style={inputStyle}
-          value={form.position}
-          onChange={(e) => setForm({ ...form, position: e.target.value })}
-          placeholder="Internship Position"
-        />
-        <label>Description</label>
-        <textarea
-          required
-          style={{ ...inputStyle, height: 80 }}
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder="Short description"
-        />
-        <button type="submit" disabled={submitting} style={applyBtn}>
-          {submitting ? "Submitting..." : "Submit Application"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowApplyForm(false)}
-          style={{ ...applyBtn, background: "#6c757d", marginLeft: 10 }}
+          style={{ ...inputStyle, width: "130px" }}
+          value={form.bloodGroup}
+          onChange={(e) => setForm((f) => ({ ...f, bloodGroup: e.target.value }))}
         >
-          Cancel
-        </button>
+          <option value="">Select Group</option>
+          <option>O+</option>
+          <option>O-</option>
+          <option>A+</option>
+          <option>A-</option>
+          <option>B+</option>
+          <option>B-</option>
+          <option>AB+</option>
+          <option>AB-</option>
+        </select>
+
+        <label>College (search & select)</label>
+        <input
+          style={{ ...inputStyle, width: "570px" }}
+          placeholder={loadingColleges ? "Loading colleges..." : "Search your college..."}
+          value={form.collegeSearch}
+          onChange={(e) => setForm((f) => ({ ...f, collegeSearch: e.target.value }))}
+        />
+
+        {form.collegeSearch && (
+          <div
+            style={{
+              maxHeight: 140,
+              overflowY: "auto",
+              border: "1px solid #eee",
+              padding: 6,
+              marginBottom: 8,
+              width: "570px"
+            }}
+          >
+            {loadingColleges && <div style={{ padding: 6 }}>Loading colleges...</div>}
+            {!loadingColleges && filteredColleges.length === 0 && (
+              <div style={{ padding: 6 }}>
+                No matches. Click <strong>Other</strong> to provide college details.
+              </div>
+            )}
+            {!loadingColleges &&
+              filteredColleges.map((c) => (
+                <div
+                  key={c.id}
+                  onClick={() => handleCollegeSelect(c.name)}
+                  style={{
+                    padding: "6px 8px",
+                    cursor: "pointer",
+                    background: form.collegeSelected === c.name ? "#f0f8ff" : "transparent",
+                    borderRadius: 4,
+                    marginBottom: 4,
+                    width: "570px"
+                  }}
+                >
+                  {c.name}
+                </div>
+              ))}
+            <div
+              onClick={() => handleCollegeSelect("Other")}
+              style={{
+                padding: "6px 8px",
+                cursor: "pointer",
+                background: form.collegeSelected === "Other" ? "#f0f8ff" : "transparent",
+                borderRadius: 4,
+                marginBottom: 4,
+                fontWeight: 600,
+                width:  "570px"
+              }}
+            >
+              Other
+            </div>
+          </div>
+        )}
+
+        {showOtherCollege && (
+          <>
+            <h4 style={{ marginTop: 12 }}>College details (Other)</h4>
+
+            <label>College name</label>
+            <input
+              style={{ ...inputStyle, width: "570px" }}
+              value={form.college.name}
+              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, name: e.target.value } }))}
+              placeholder="College name"
+              required={showOtherCollege}
+            />
+
+            <label>College address</label>
+            <input
+              style={{ ...inputStyle, width: "570px" }}
+              value={form.college.address}
+              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, address: e.target.value } }))}
+              placeholder="Address"
+              required={showOtherCollege}
+            />
+
+            <label>College pincode</label>
+            <input
+              style={{ ...inputStyle, width: "200px" }}
+              value={form.college.pincode}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, college: { ...f.college, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) } }))
+              }
+              placeholder="6-digit pincode"
+              required={showOtherCollege}
+            />
+
+            <label>College contact number</label>
+            <input
+              style={{ ...inputStyle, width: "200px" }}
+              value={form.college.contact}
+              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, contact: e.target.value } }))}
+              placeholder="Contact number"
+              required={showOtherCollege}
+            />
+          </>
+        )}
+
+        <label style={{ marginTop: 8 }}>Apply for</label>
+        <select
+          style={inputStyle}
+          value={form.internshipType}
+          onChange={(e) => setForm((f) => ({ ...f, internshipType: e.target.value }))}
+        >
+          <option>Internship</option>
+          <option>On Job Training</option>
+          <option>Vocational Trainee</option>
+        </select>
+
+        {/* --- CHANGE: Modified date fields to be vertical --- */}
+        <label>Start date</label>
+        <input
+          style={{ ...inputStyle, width: "180px" }}
+          type="date"
+          value={form.startDate}
+          onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+        />
+
+        <label>End date</label>
+        <input
+          style={{ ...inputStyle, width: "180px" }}
+          type="date"
+          value={form.endDate}
+          onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+        />
+
+        <label>Already received confirmation?</label>
+        <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+          <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <input type="radio" name="receivedConfirmation" checked={form.receivedConfirmation === "Yes"} onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "Yes" }))} />
+            Yes
+          </label>
+          <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <input type="radio" name="receivedConfirmation" checked={form.receivedConfirmation === "No"} onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "No", confirmationNumber: "" }))} />
+            No
+          </label>
+        </div>
+
+        {form.receivedConfirmation === "Yes" && (
+          <>
+            <label>Confirmation number</label>
+            <input style={inputStyle} value={form.confirmationNumber} onChange={(e) => setForm((f) => ({ ...f, confirmationNumber: e.target.value }))} placeholder="Confirmation number" required />
+          </>
+        )}
+
+        <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+          <button type="submit" disabled={submitting} style={applyBtn}>
+            {submitting ? "Submitting..." : "Submit Application"}
+          </button>
+
+          <button type="button" onClick={() => setShowApplyForm(false)} style={{ ...applyBtn, background: "#6c757d", marginLeft: 10 }}>
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );
 }
+
 
 /* ---------- STYLES ---------- */
 const wrap = {
@@ -669,7 +942,9 @@ const rightPane = {
   display: "flex",
   flexDirection: "column",
   justifyContent: "flex-start",
-  overflow: "hidden",
+  overflowY: "auto",
+  overflowX: "hidden",
+  height: "100vh",
 };
 
 const profileCard = {
