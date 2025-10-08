@@ -113,6 +113,11 @@ export default function StudentDashboard() {
             {profile?.fullName || "Student"}
           </div>
           <div style={{ fontSize: 14, color: "#333" }}>{user?.email}</div>
+          {profile?.discipline && (
+            <div style={{ fontSize: 14, color: "#444", marginTop: 6, fontWeight: "bold" }}>
+              🎓 {profile.discipline}
+            </div>
+          )}
           {profile?.phone && (
             <div style={{ fontSize: 14, color: "#555", marginTop: 4 }}>
               📞 {profile.phone}
@@ -191,19 +196,63 @@ export default function StudentDashboard() {
                                   : "-"}
                               </td>
                               <td style={thtd}>
-                                <span
+                                <div
                                   style={{
-                                    color:
-                                      app.status === "Completed"
-                                        ? "green"
-                                        : app.status === "Terminated"
-                                        ? "red"
-                                        : "#ff9800",
-                                    fontWeight: 600,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
                                   }}
                                 >
-                                  {app.status || "Pending"}
-                                </span>
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      padding: "4px 10px",
+                                      borderRadius: "999px",
+                                      backgroundColor:
+                                        app.status?.toLowerCase() === "approved" ||
+                                        app.status?.toLowerCase() === "accepted" ||
+                                        app.status?.toLowerCase() === "completed"
+                                          ? "rgba(40, 167, 69, 0.15)" // light green background
+                                          : app.status?.toLowerCase() === "rejected" ||
+                                            app.status?.toLowerCase() === "terminated"
+                                          ? "rgba(220, 53, 69, 0.15)" // light red background
+                                          : "rgba(255, 193, 7, 0.15)", // pending: light orange
+                                      color:
+                                        app.status?.toLowerCase() === "approved" ||
+                                        app.status?.toLowerCase() === "accepted" ||
+                                        app.status?.toLowerCase() === "completed"
+                                          ? "#28a745"
+                                          : app.status?.toLowerCase() === "rejected" ||
+                                            app.status?.toLowerCase() === "terminated"
+                                          ? "#dc3545"
+                                          : "#ff9800",
+                                      fontWeight: 700,
+                                      textTransform: "capitalize",
+                                    }}
+                                  >
+                                    {app.status || "Pending"}
+                                  </span>
+
+                                  {/* Show tooltip icon only if completed or terminated */}
+                                  {(app.status?.toLowerCase() === "completed" ||
+                                    app.status?.toLowerCase() === "terminated") &&
+                                    app.reason && (
+                                      <div className="tooltip-wrapper">
+                                        <span
+                                          className="tooltip-icon"
+                                          style={{
+                                            color:
+                                              app.status?.toLowerCase() === "terminated"
+                                                ? "#dc3545"
+                                                : "#28a745",
+                                          }}
+                                        >
+                                          &#9432;
+                                        </span>
+                                        <div className="tooltip-box">{app.reason}</div>
+                                      </div>
+                                    )}
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -244,6 +293,7 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
     email: user?.email || existingProfile?.email || "",
     fullName: existingProfile?.fullName || "",
     phone: existingProfile?.phone || "",
+    discipline: existingProfile?.discipline || "",
     addressLine: existingProfile?.addressLine || "",
     pincode: existingProfile?.pincode || "",
     city: existingProfile?.city || "",
@@ -294,6 +344,7 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
         pincode: form.pincode,
         city: form.city || "",
         state: form.state || "",
+        discipline: form.discipline || "",
         email: form.email,
         updatedAt: serverTimestamp(),
       };
@@ -333,6 +384,15 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
           value={form.fullName}
           onChange={(e) => setForm({ ...form, fullName: e.target.value })}
           placeholder="Your full name"
+        />
+
+        <label>Discipline / Branch</label>
+        <input
+          required
+          style={inputStyle}
+          value={form.discipline}
+          onChange={(e) => setForm({ ...form, discipline: e.target.value })}
+          placeholder="e.g. Mechanical, Electrical, Computer Science"
         />
 
         <label>Mobile number</label>
@@ -407,6 +467,7 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
     city: profile?.city || "",
     state: profile?.state || "",
     email: user?.email || profile?.email || "",
+    discipline: profile?.discipline || "",
   });
   const [saving, setSaving] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -453,6 +514,7 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
         city: form.city || "",
         state: form.state || "",
         email: form.email, // read-only here
+        discipline: form.discipline || "",
         updatedAt: serverTimestamp(),
       };
       // merge so we never touch role/status fields (passes your rules)
@@ -491,6 +553,15 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
           value={form.fullName}
           onChange={(e) => setForm({ ...form, fullName: e.target.value })}
           placeholder="Your full name"
+        />
+
+        <label>Discipline / Branch</label>
+        <input
+          required
+          style={inputStyle}
+          value={form.discipline}
+          onChange={(e) => setForm({ ...form, discipline: e.target.value })}
+          placeholder="e.g. Mechanical, Electrical, Computer Science"
         />
 
         <label>Mobile number</label>
@@ -570,6 +641,7 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
     fullName: profile?.fullName || "",
     phone: profile?.phone || "",
     email: user?.email || "",
+    discipline: profile?.discipline || "",
     bloodGroup: "",
     collegeSearch: "",
     collegeSelected: "", // chosen college name from master or "Other"
@@ -633,6 +705,7 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
     if (!form.fullName.trim()) return "Full name is required.";
     if (!/^\d{10}$/.test(form.phone)) return "Enter a valid 10-digit mobile number.";
     if (!form.email || !/^\S+@\S+\.\S+$/.test(form.email)) return "Enter a valid email address.";
+    if (!form.discipline.trim()) return "Please provide your discipline/branch.";
     if (!form.bloodGroup) return "Please select your blood group.";
     if (!form.collegeSelected) return "Please select or provide your college.";
     if (form.collegeSelected === "Other") {
@@ -693,6 +766,7 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
         receivedConfirmation: form.receivedConfirmation === "Yes",
         confirmationNumber: form.receivedConfirmation === "Yes" ? form.confirmationNumber : "",
         createdAt: serverTimestamp(),
+        status: "pending",
       };
 
       await addDoc(collection(db, "applications"), payload);
@@ -718,6 +792,9 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
       <form onSubmit={handleSubmit}>
         <label>Full Name</label>
         <input style={{ ...inputStyle, width: "570px" }} value={form.fullName} readOnly />
+
+        <label>Discipline / Branch</label>
+        <input style={{ ...inputStyle, width: "400px" }} value={form.discipline} readOnly />
 
         <label>Mobile number</label>
         <input style={{ ...inputStyle, width: "80px" }} value={form.phone} readOnly />
@@ -848,7 +925,7 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
 
         <label style={{ marginTop: 8 }}>Apply for</label>
         <select
-          style={inputStyle}
+          style={{...inputStyle, width: "200px"}}
           value={form.internshipType}
           onChange={(e) => setForm((f) => ({ ...f, internshipType: e.target.value }))}
         >
@@ -975,7 +1052,7 @@ const card = {
   padding: 25,
   marginTop: 20,
   borderRadius: 10,
-  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
 };
 
 const table = {

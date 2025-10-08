@@ -83,7 +83,7 @@ export default function Login() {
             url: `${window.location.origin}/finishVerify`,
             handleCodeInApp: true,
           });
-          toast.success("Verification email sent. Please check your inbox.");
+          toast.success("Verification email sent. Please check your inbox and spam.");
         }
         await auth.signOut();
         setLoading(false);
@@ -122,6 +122,7 @@ export default function Login() {
     } catch (err) {
       console.error("Login error:", err);
       setInfo(err.message || "Login failed");
+      toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -166,8 +167,11 @@ export default function Login() {
       });
 
       setRegInfo(
-        "Registration successful — verification email sent. Please check your inbox."
+        "Registration successful — verification email sent. Please check your inbox and spam."
       );
+
+      // NEW: toast for registration success
+      toast.success("Registration successful — verification email sent.");
 
       setRegEmail("");
       setRegPassword("");
@@ -176,6 +180,7 @@ export default function Login() {
     } catch (err) {
       console.error("Register error:", err);
       setRegInfo(err.message || "Registration failed");
+      toast.error(err.message || "Registration failed");
     } finally {
       setRegLoading(false);
     }
@@ -192,14 +197,20 @@ export default function Login() {
         url: `${window.location.origin}/finishVerify`,
         handleCodeInApp: true,
       });
+
       setForgotInfo(
         "Password reset email sent. Please check your inbox (and spam)."
       );
+
+      // NEW: toast for password reset
+      toast.success("Password reset email sent. Please check your inbox and spam.");
+
       setForgotEmail("");
       setShowForgot(false);
     } catch (err) {
       console.error("Forgot password error:", err);
       setForgotInfo(err.message || "Failed to send reset email");
+      toast.error(err.message || "Failed to send reset email");
     } finally {
       setForgotLoading(false);
     }

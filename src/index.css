@@ -17,3 +17,54 @@ html, body, #root {
   height: 100%;
   overflow: auto; /* enable scroll only inside this container */
 }
+
+/* ---------- Tooltip styling for status reason ---------- */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-icon {
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 6px;
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+.tooltip-box {
+  visibility: hidden;
+  opacity: 0;
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 6px 8px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%; /* show above the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+/* Arrow below the tooltip */
+.tooltip-box::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+/* Show tooltip on hover */
+.tooltip-wrapper:hover .tooltip-box {
+  visibility: visible;
+  opacity: 1;
+}
