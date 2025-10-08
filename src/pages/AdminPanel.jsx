@@ -56,6 +56,22 @@ export default function AdminPanel() {
   const [showCollegeForm, setShowCollegeForm] = useState(false);
   const [newCollege, setNewCollege] = useState({ name: "", address: "", email: "", contact: "" });
 
+  // ----------------- helper: format date (handles Firestore Timestamp) -----------------
+  function formatDate(raw) {
+    if (!raw) return "-";
+    try {
+      // Firestore Timestamp has toDate()
+      if (raw.toDate && typeof raw.toDate === "function") {
+        return raw.toDate().toLocaleDateString();
+      }
+      // If ISO string or Date
+      const d = raw instanceof Date ? raw : new Date(raw);
+      if (isNaN(d.getTime())) return String(raw);
+      return d.toLocaleDateString();
+    } catch (e) {
+      return String(raw);
+    }
+  }
 
   // Loaders for initial mount / view switch
   useEffect(() => {
@@ -340,7 +356,7 @@ export default function AdminPanel() {
       toast.success("Role updated.");
       await loadUsers();
     } catch (err) {
-      console.error(err);
+      console.error("updateUserRole error", err);
       toast.error("Failed to update role: " + (err.message || err.code));
     }
   }
@@ -535,32 +551,87 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ---------- VIEW: Applications ---------- */}
+          {/* ---------- VIEW: Applications (UPDATED) ---------- */}
           {view === "applications" && (
             <div>
-              {applications.length === 0 ? <div>No pending applications</div> : applications.map((app) => (
-                <div key={app.id} style={card}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{app.studentName || app.email || "Applicant"}</div>
-                      <div style={{ marginTop: 6 }}>{app.college?.name || app.collegeName || "-"}</div>
-                      <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
-                        Submitted: {app.createdAt?.toDate ? app.createdAt.toDate().toLocaleString() : app.createdAt || "-"}
-                      </div>
-                    </div>
+              {applications.length === 0 ? <div>No pending applications</div> : applications.map((app) => {
+                // Resolve possible field names (be tolerant)
+                const internshipType =
+                  app.internshipType ||
+                  app.internType ||
+                  app.type ||
+                  app.internship ||
+                  "—";
 
-                    <div style={{ minWidth: 220, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div style={{ fontSize: 13 }}>
-                        Status: <span style={{ fontWeight: 700, color: "#ff9800" }}>{app.status || "Pending"}</span>
+                const startRaw =
+                  app.startDate ||
+                  app.fromDate ||
+                  app.from ||
+                  app.internshipStart ||
+                  app.start;
+
+                const endRaw =
+                  app.endDate ||
+                  app.toDate ||
+                  app.to ||
+                  app.internshipEnd ||
+                  app.end;
+
+                const collegeName =
+                  (app.college && (app.college.name || app.collegeName)) ||
+                  app.collegeName ||
+                  app.college_name ||
+                  "-";
+
+                const confirmation =
+                  app.confirmationNumber ||
+                  app.confirmationNo ||
+                  app.confirmation ||
+                  app.confirmation_id ||
+                  app.confirmNo ||
+                  "";
+
+                return (
+                  <div key={app.id} style={card}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{app.studentName || app.email || "Applicant"}</div>
+
+                        {/* NEW: internship + duration + college + confirmation */}
+                        <div style={{ marginTop: 6 }}>
+                          <strong>Application:</strong> {internshipType}
+                        </div>
+                        <div style={{ marginTop: 6 }}>
+                          <strong>Duration:</strong>{" "}
+                          {startRaw ? formatDate(startRaw) : "-"} {" → "} {endRaw ? formatDate(endRaw) : "-"}
+                        </div>
+                        <div style={{ marginTop: 6 }}>
+                          <strong>College:</strong> {collegeName}
+                        </div>
+                        {confirmation ? (
+                          <div style={{ marginTop: 6 }}>
+                            <strong>Confirmation No.:</strong> {confirmation}
+                          </div>
+                        ) : null}
+
+                        <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
+                          Submitted: {app.createdAt?.toDate ? app.createdAt.toDate().toLocaleString() : app.createdAt || "-"}
+                        </div>
                       </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => approveApplication(app)} style={applyBtn} disabled={working}>Approve</button>
-                        <button onClick={() => rejectApplication(app)} style={{ ...applyBtn, background: "#6c757d" }}>Reject</button>
+
+                      <div style={{ minWidth: 220, display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ fontSize: 13 }}>
+                          Status: <span style={{ fontWeight: 700, color: "#ff9800" }}>{app.status || "Pending"}</span>
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => approveApplication(app)} style={applyBtn} disabled={working}>Approve</button>
+                          <button onClick={() => rejectApplication(app)} style={{ ...applyBtn, background: "#6c757d" }}>Reject</button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -688,7 +759,6 @@ export default function AdminPanel() {
               )}
             </div>
           )}
-
 
           {/* ---------- VIEW: College Master ---------- */}
           {view === "college_master" && (
@@ -831,6 +901,7 @@ export default function AdminPanel() {
 }
 
 /* ---------- STYLES ---------- */
+/* (unchanged) */
 const wrap = {
   position: "fixed",
   inset: 0,
