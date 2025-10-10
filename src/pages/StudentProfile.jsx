@@ -1,3 +1,4 @@
+// src/pages/StudentDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { signOut, sendPasswordResetEmail } from "firebase/auth";
@@ -41,14 +42,12 @@ export default function StudentDashboard() {
           const data = snap.data();
           setProfile(data);
 
-          // Show basic info form only if essential fields are missing
           if (!data.fullName || !data.phone || !data.pincode) {
             setShowBasicForm(true);
           } else {
             setShowBasicForm(false);
           }
         } else {
-          // first-time: no user doc present
           setProfile(null);
           setShowBasicForm(true);
         }
@@ -134,10 +133,7 @@ export default function StudentDashboard() {
             ✏️ Edit Profile
           </button>
 
-          <button
-            onClick={handleChangePassword}
-            style={{ ...sideBtn, background: "#0d6efd" }}
-          >
+          <button onClick={handleChangePassword} style={{ ...sideBtn, background: "#0d6efd" }}>
             🔒 Change Password
           </button>
 
@@ -181,7 +177,7 @@ export default function StudentDashboard() {
                       <table style={table}>
                         <thead>
                           <tr>
-                            <th style={thtd}>Type</th>                        
+                            <th style={thtd}>Type</th>
                             <th style={thtd}>Applied On</th>
                             <th style={thtd}>Status</th>
                           </tr>
@@ -191,49 +187,38 @@ export default function StudentDashboard() {
                             <tr key={app.id}>
                               <td style={thtd}>{app.internshipType}</td>
                               <td style={thtd}>
-                                {app.createdAt?.toDate
-                                  ? app.createdAt.toDate().toLocaleDateString()
-                                  : "-"}
+                                {app.createdAt?.toDate ? app.createdAt.toDate().toLocaleDateString() : "-"}
                               </td>
                               <td style={thtd}>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      display: "inline-block",
-                                      padding: "4px 10px",
-                                      borderRadius: "999px",
-                                      backgroundColor:
-                                        app.status?.toLowerCase() === "approved" ||
-                                        app.status?.toLowerCase() === "accepted" ||
-                                        app.status?.toLowerCase() === "completed"
-                                          ? "rgba(40, 167, 69, 0.15)" // light green background
-                                          : app.status?.toLowerCase() === "rejected" ||
-                                            app.status?.toLowerCase() === "terminated"
-                                          ? "rgba(220, 53, 69, 0.15)" // light red background
-                                          : "rgba(255, 193, 7, 0.15)", // pending: light orange
-                                      color:
-                                        app.status?.toLowerCase() === "approved" ||
-                                        app.status?.toLowerCase() === "accepted" ||
-                                        app.status?.toLowerCase() === "completed"
-                                          ? "#28a745"
-                                          : app.status?.toLowerCase() === "rejected" ||
-                                            app.status?.toLowerCase() === "terminated"
-                                          ? "#dc3545"
-                                          : "#ff9800",
-                                      fontWeight: 700,
-                                      textTransform: "capitalize",
-                                    }}
-                                  >
+                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <span style={{
+                                    display: "inline-block",
+                                    padding: "4px 10px",
+                                    borderRadius: "999px",
+                                    backgroundColor:
+                                      app.status?.toLowerCase() === "approved" ||
+                                      app.status?.toLowerCase() === "accepted" ||
+                                      app.status?.toLowerCase() === "completed"
+                                        ? "rgba(40, 167, 69, 0.15)"
+                                        : app.status?.toLowerCase() === "rejected" ||
+                                          app.status?.toLowerCase() === "terminated"
+                                        ? "rgba(220, 53, 69, 0.15)"
+                                        : "rgba(255, 193, 7, 0.15)",
+                                    color:
+                                      app.status?.toLowerCase() === "approved" ||
+                                      app.status?.toLowerCase() === "accepted" ||
+                                      app.status?.toLowerCase() === "completed"
+                                        ? "#28a745"
+                                        : app.status?.toLowerCase() === "rejected" ||
+                                          app.status?.toLowerCase() === "terminated"
+                                        ? "#dc3545"
+                                        : "#ff9800",
+                                    fontWeight: 700,
+                                    textTransform: "capitalize",
+                                  }}>
                                     {app.status || "Pending"}
                                   </span>
 
-                                  {/* Show tooltip icon only if completed or terminated */}
                                   {(app.status?.toLowerCase() === "completed" ||
                                     app.status?.toLowerCase() === "terminated") &&
                                     app.reason && (
@@ -287,7 +272,7 @@ export default function StudentDashboard() {
   );
 }
 
-/* ---------- BASIC INFO FORM (FIRST-TIME USERS) ---------- */
+/* ---------- BASIC INFO FORM (first-time) ---------- */
 function BasicInfoForm({ user, existingProfile, onCompleted }) {
   const [form, setForm] = useState({
     email: user?.email || existingProfile?.email || "",
@@ -368,84 +353,36 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
     <div style={card}>
       <h3>Complete your basic information</h3>
       <p>Please provide your name, mobile number and address (pincode, city, state).</p>
-
       <form onSubmit={handleSubmit}>
         <label>Email</label>
-        <input
-          style={{ ...inputStyle, background: "#f2f2f2", cursor: "not-allowed" }}
-          value={form.email}
-          readOnly
-        />
+        <input style={{ ...inputStyle, background: "#f2f2f2", cursor: "not-allowed", width: "300px" }} value={form.email} readOnly />
 
         <label>Full name</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.fullName}
-          onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-          placeholder="Your full name"
-        />
+        <input required style={{ ...inputStyle, width: "500px" }} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Your full name" />
 
         <label>Discipline / Branch</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.discipline}
-          onChange={(e) => setForm({ ...form, discipline: e.target.value })}
-          placeholder="e.g. Mechanical, Electrical, Computer Science"
-        />
+        <input required style={{ ...inputStyle, width: "300px" }} value={form.discipline} onChange={(e) => setForm({ ...form, discipline: e.target.value })} placeholder="e.g. Mechanical, Electrical, Computer Science" />
 
         <label>Mobile number</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.phone}
-          onChange={(e) =>
-            setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })
-          }
-          placeholder="10-digit mobile number"
-        />
+        <input required style={{ ...inputStyle, width: "200px" }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })} placeholder="10-digit mobile number" />
 
         <label>Address line (house/street)</label>
-        <input
-          style={inputStyle}
-          value={form.addressLine}
-          onChange={(e) => setForm({ ...form, addressLine: e.target.value })}
-          placeholder="House / Street / Locality"
-        />
+        <input style={{ ...inputStyle, width: "800px" }} value={form.addressLine} onChange={(e) => setForm({ ...form, addressLine: e.target.value })} placeholder="House / Street / Locality" />
 
         <label>Pincode</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.pincode}
-          onChange={(e) => {
-            const v = e.target.value.replace(/\D/g, "").slice(0, 6);
-            setForm((f) => ({ ...f, pincode: v }));
-            if (v.length === 6) lookupPincode(v);
-            else setForm((f) => ({ ...f, city: "", state: "" }));
-          }}
-          placeholder="6-digit PIN code"
-        />
+        <input required style={{ ...inputStyle, width: "100px" }} value={form.pincode} onChange={(e) => {
+          const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+          setForm((f) => ({ ...f, pincode: v }));
+          if (v.length === 6) lookupPincode(v);
+          else setForm((f) => ({ ...f, city: "", state: "" }));
+        }} placeholder="6-digit PIN code" />
         {pincodeLoading && <div style={{ fontSize: 13, marginTop: -8 }}>Looking up city/state...</div>}
 
         <label>City</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.city}
-          onChange={(e) => setForm({ ...form, city: e.target.value })}
-          placeholder="City (auto-filled from pincode)"
-        />
+        <input required style={{ ...inputStyle, width: "200px" }} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City (auto-filled from pincode)" />
 
         <label>State</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.state}
-          onChange={(e) => setForm({ ...form, state: e.target.value })}
-          placeholder="State (auto-filled from pincode)"
-        />
+        <input required style={{ ...inputStyle, width: "200px" }} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State (auto-filled from pincode)" />
 
         <div style={{ marginTop: 10 }}>
           <button type="submit" disabled={loading} style={applyBtn}>
@@ -457,7 +394,7 @@ function BasicInfoForm({ user, existingProfile, onCompleted }) {
   );
 }
 
-/* ---------- EDIT PROFILE ---------- */
+/* ---------- EDIT PROFILE (unchanged from earlier file, but kept safe) ---------- */
 function EditProfile({ user, profile, setShowEdit, onSaved }) {
   const [form, setForm] = useState({
     fullName: profile?.fullName || "",
@@ -513,11 +450,10 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
         pincode: form.pincode,
         city: form.city || "",
         state: form.state || "",
-        email: form.email, // read-only here
+        email: form.email,
         discipline: form.discipline || "",
         updatedAt: serverTimestamp(),
       };
-      // merge so we never touch role/status fields (passes your rules)
       await setDoc(userRef, payload, { merge: true });
 
       toast.success("Profile updated.");
@@ -540,102 +476,45 @@ function EditProfile({ user, profile, setShowEdit, onSaved }) {
       <h3>Edit Profile</h3>
       <form onSubmit={handleSubmit}>
         <label>Email</label>
-        <input
-          style={{ ...inputStyle, background: "#f2f2f2", cursor: "not-allowed" }}
-          value={form.email}
-          readOnly
-        />
+        <input style={{ ...inputStyle, background: "#f2f2f2", cursor: "not-allowed" }} value={form.email} readOnly />
 
         <label>Full name</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.fullName}
-          onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-          placeholder="Your full name"
-        />
+        <input required style={inputStyle} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Your full name" />
 
         <label>Discipline / Branch</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.discipline}
-          onChange={(e) => setForm({ ...form, discipline: e.target.value })}
-          placeholder="e.g. Mechanical, Electrical, Computer Science"
-        />
+        <input required style={inputStyle} value={form.discipline} onChange={(e) => setForm({ ...form, discipline: e.target.value })} placeholder="e.g. Mechanical, Electrical, Computer Science" />
 
         <label>Mobile number</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.phone}
-          onChange={(e) =>
-            setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })
-          }
-          placeholder="10-digit mobile number"
-        />
+        <input required style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })} placeholder="10-digit mobile number" />
 
         <label>Address line (house/street)</label>
-        <input
-          style={inputStyle}
-          value={form.addressLine}
-          onChange={(e) => setForm({ ...form, addressLine: e.target.value })}
-          placeholder="House / Street / Locality"
-        />
+        <input style={inputStyle} value={form.addressLine} onChange={(e) => setForm({ ...form, addressLine: e.target.value })} placeholder="House / Street / Locality" />
 
         <label>Pincode</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.pincode}
-          onChange={(e) => {
-            const v = e.target.value.replace(/\D/g, "").slice(0, 6);
-            setForm((f) => ({ ...f, pincode: v }));
-            if (v.length === 6) lookupPincode(v);
-            else setForm((f) => ({ ...f, city: "", state: "" }));
-          }}
-          placeholder="6-digit PIN code"
-        />
-        {pincodeLoading && (
-          <div style={{ fontSize: 13, marginTop: -8 }}>Looking up city/state...</div>
-        )}
+        <input required style={inputStyle} value={form.pincode} onChange={(e) => {
+          const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+          setForm((f) => ({ ...f, pincode: v }));
+          if (v.length === 6) lookupPincode(v);
+          else setForm((f) => ({ ...f, city: "", state: "" }));
+        }} placeholder="6-digit PIN code" />
+        {pincodeLoading && <div style={{ fontSize: 13, marginTop: -8 }}>Looking up city/state...</div>}
 
         <label>City</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.city}
-          onChange={(e) => setForm({ ...form, city: e.target.value })}
-          placeholder="City"
-        />
+        <input required style={inputStyle} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City" />
 
         <label>State</label>
-        <input
-          required
-          style={inputStyle}
-          value={form.state}
-          onChange={(e) => setForm({ ...form, state: e.target.value })}
-          placeholder="State"
-        />
+        <input required style={inputStyle} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State" />
 
         <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-          <button type="submit" disabled={saving} style={applyBtn}>
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowEdit(false)}
-            style={{ ...applyBtn, background: "#6c757d" }}
-          >
-            Cancel
-          </button>
+          <button type="submit" disabled={saving} style={applyBtn}>{saving ? "Saving..." : "Save Changes"}</button>
+          <button type="button" onClick={() => setShowEdit(false)} style={{ ...applyBtn, background: "#6c757d" }}>Cancel</button>
         </div>
       </form>
     </div>
   );
 }
 
-/* ---------- APPLY FORM (master colleges + save "Other" to colleges_temp) ---------- */
+/* ---------- APPLY FORM (updated for validations and colleges_temp email) ---------- */
 function ApplyForm({ user, profile, setShowApplyForm, reload }) {
   const [form, setForm] = useState({
     fullName: profile?.fullName || "",
@@ -644,8 +523,8 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
     discipline: profile?.discipline || "",
     bloodGroup: "",
     collegeSearch: "",
-    collegeSelected: "", // chosen college name from master or "Other"
-    college: { name: "", address: "", pincode: "", contact: "" }, // used when "Other"
+    collegeSelected: "",
+    college: { name: "", address: "", pincode: "", contact: "" },
     internshipType: "Internship",
     startDate: "",
     endDate: "",
@@ -658,7 +537,6 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
   const [masterColleges, setMasterColleges] = useState([]);
   const [loadingColleges, setLoadingColleges] = useState(true);
 
-  // Load colleges_master from Firestore on mount
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -670,9 +548,7 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
           const data = d.data();
           cols.push({ id: d.id, name: data.name || data.collegeName || "" });
         });
-        if (!cancelled) {
-          setMasterColleges(cols);
-        }
+        if (!cancelled) setMasterColleges(cols);
       } catch (err) {
         console.error("Failed to load colleges_master:", err);
         if (!cancelled) setMasterColleges([]);
@@ -712,17 +588,18 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
       if (!form.college.name.trim()) return "Please enter your college name.";
       if (!form.college.address.trim()) return "Please enter your college address.";
       if (!/^\d{6}$/.test(form.college.pincode)) return "Enter a valid 6-digit college pincode.";
-      if (!/^\d{7,15}$/.test(form.college.contact.replace(/\D/g, "")))
-        return "Enter a valid college contact number (7-15 digits).";
+      if (!/^\d{7,15}$/.test(form.college.contact.replace(/\D/g, ""))) return "Enter a valid college contact number (7-15 digits).";
     }
     if (!form.internshipType) return "Please select the internship type.";
     if (!form.startDate) return "Please select a start date.";
     if (!form.endDate) return "Please select an end date.";
-    if (new Date(form.endDate) < new Date(form.startDate))
-      return "End date cannot be before start date.";
+    if (new Date(form.endDate) < new Date(form.startDate)) return "End date cannot be before start date.";
     if (!form.receivedConfirmation) return "Please indicate if you've received confirmation.";
-    if (form.receivedConfirmation === "Yes" && !form.confirmationNumber.trim())
-      return "Please enter the confirmation number.";
+    if (form.receivedConfirmation === "Yes") {
+      // confirmation number must be alphanumeric and a reasonable length
+      if (!/^[A-Za-z0-9\-]{4,40}$/.test(form.confirmationNumber.trim()))
+        return "Please enter a valid confirmation number (4+ alphanumeric chars).";
+    }
     return null;
   }
 
@@ -735,12 +612,14 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
     try {
       let tempCollegeRef = null;
       if (form.collegeSelected === "Other") {
+        const sanitizedContact = (form.college.contact || "").replace(/\D/g, "");
         const collegePayload = {
           name: form.college.name.trim(),
           address: form.college.address.trim(),
           pincode: form.college.pincode,
-          contact: form.college.contact,
+          contact: sanitizedContact,
           submittedBy: user.uid,
+          submittedByEmail: user?.email || "",
           submittedAt: serverTimestamp(),
           status: "pending",
         };
@@ -764,7 +643,7 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
         startDate: form.startDate,
         endDate: form.endDate,
         receivedConfirmation: form.receivedConfirmation === "Yes",
-        confirmationNumber: form.receivedConfirmation === "Yes" ? form.confirmationNumber : "",
+        confirmationNumber: form.receivedConfirmation === "Yes" ? form.confirmationNumber.trim() : "",
         createdAt: serverTimestamp(),
         status: "pending",
       };
@@ -803,12 +682,7 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
         <input style={{ ...inputStyle, width: "300px" }} value={form.email} readOnly />
 
         <label>Blood Group</label>
-        <select
-          required
-          style={{ ...inputStyle, width: "130px" }}
-          value={form.bloodGroup}
-          onChange={(e) => setForm((f) => ({ ...f, bloodGroup: e.target.value }))}
-        >
+        <select required style={{ ...inputStyle, width: "130px" }} value={form.bloodGroup} onChange={(e) => setForm((f) => ({ ...f, bloodGroup: e.target.value }))}>
           <option value="">Select Group</option>
           <option>O+</option>
           <option>O-</option>
@@ -821,61 +695,16 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
         </select>
 
         <label>College (search & select)</label>
-        <input
-          style={{ ...inputStyle, width: "570px" }}
-          placeholder={loadingColleges ? "Loading colleges..." : "Search your college..."}
-          value={form.collegeSearch}
-          onChange={(e) => setForm((f) => ({ ...f, collegeSearch: e.target.value }))}
-        />
+        <input style={{ ...inputStyle, width: "570px" }} placeholder={loadingColleges ? "Loading colleges..." : "Search your college..."} value={form.collegeSearch} onChange={(e) => setForm((f) => ({ ...f, collegeSearch: e.target.value }))} />
 
         {form.collegeSearch && (
-          <div
-            style={{
-              maxHeight: 140,
-              overflowY: "auto",
-              border: "1px solid #eee",
-              padding: 6,
-              marginBottom: 8,
-              width: "570px"
-            }}
-          >
+          <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid #eee", padding: 6, marginBottom: 8, width: "570px" }}>
             {loadingColleges && <div style={{ padding: 6 }}>Loading colleges...</div>}
-            {!loadingColleges && filteredColleges.length === 0 && (
-              <div style={{ padding: 6 }}>
-                No matches. Click <strong>Other</strong> to provide college details.
-              </div>
-            )}
-            {!loadingColleges &&
-              filteredColleges.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => handleCollegeSelect(c.name)}
-                  style={{
-                    padding: "6px 8px",
-                    cursor: "pointer",
-                    background: form.collegeSelected === c.name ? "#f0f8ff" : "transparent",
-                    borderRadius: 4,
-                    marginBottom: 4,
-                    width: "570px"
-                  }}
-                >
-                  {c.name}
-                </div>
-              ))}
-            <div
-              onClick={() => handleCollegeSelect("Other")}
-              style={{
-                padding: "6px 8px",
-                cursor: "pointer",
-                background: form.collegeSelected === "Other" ? "#f0f8ff" : "transparent",
-                borderRadius: 4,
-                marginBottom: 4,
-                fontWeight: 600,
-                width:  "570px"
-              }}
-            >
-              Other
-            </div>
+            {!loadingColleges && filteredColleges.length === 0 && <div style={{ padding: 6 }}>No matches. Click <strong>Other</strong> to provide college details.</div>}
+            {!loadingColleges && filteredColleges.map((c) => (
+              <div key={c.id} onClick={() => handleCollegeSelect(c.name)} style={{ padding: "6px 8px", cursor: "pointer", background: form.collegeSelected === c.name ? "#f0f8ff" : "transparent", borderRadius: 4, marginBottom: 4, width: "570px" }}>{c.name}</div>
+            ))}
+            <div onClick={() => handleCollegeSelect("Other")} style={{ padding: "6px 8px", cursor: "pointer", background: form.collegeSelected === "Other" ? "#f0f8ff" : "transparent", borderRadius: 4, marginBottom: 4, fontWeight: 600, width: "570px" }}>Other</div>
           </div>
         )}
 
@@ -884,82 +713,39 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
             <h4 style={{ marginTop: 12 }}>College details (Other)</h4>
 
             <label>College name</label>
-            <input
-              style={{ ...inputStyle, width: "570px" }}
-              value={form.college.name}
-              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, name: e.target.value } }))}
-              placeholder="College name"
-              required={showOtherCollege}
-            />
+            <input style={{ ...inputStyle, width: "570px" }} value={form.college.name} onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, name: e.target.value } }))} placeholder="College name" required={showOtherCollege} />
 
             <label>College address</label>
-            <input
-              style={{ ...inputStyle, width: "570px" }}
-              value={form.college.address}
-              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, address: e.target.value } }))}
-              placeholder="Address"
-              required={showOtherCollege}
-            />
+            <input style={{ ...inputStyle, width: "570px" }} value={form.college.address} onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, address: e.target.value } }))} placeholder="Address" required={showOtherCollege} />
 
             <label>College pincode</label>
-            <input
-              style={{ ...inputStyle, width: "200px" }}
-              value={form.college.pincode}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, college: { ...f.college, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) } }))
-              }
-              placeholder="6-digit pincode"
-              required={showOtherCollege}
-            />
+            <input style={{ ...inputStyle, width: "200px" }} value={form.college.pincode} onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) } }))} placeholder="6-digit pincode" required={showOtherCollege} />
 
             <label>College contact number</label>
-            <input
-              style={{ ...inputStyle, width: "200px" }}
-              value={form.college.contact}
-              onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, contact: e.target.value } }))}
-              placeholder="Contact number"
-              required={showOtherCollege}
-            />
+            <input style={{ ...inputStyle, width: "200px" }} value={form.college.contact} onChange={(e) => setForm((f) => ({ ...f, college: { ...f.college, contact: e.target.value } }))} placeholder="Contact number" required={showOtherCollege} />
           </>
         )}
 
         <label style={{ marginTop: 8 }}>Apply for</label>
-        <select
-          style={{...inputStyle, width: "200px"}}
-          value={form.internshipType}
-          onChange={(e) => setForm((f) => ({ ...f, internshipType: e.target.value }))}
-        >
+        <select style={{...inputStyle, width: "200px"}} value={form.internshipType} onChange={(e) => setForm((f) => ({ ...f, internshipType: e.target.value }))}>
           <option>Internship</option>
           <option>On Job Training</option>
           <option>Vocational Trainee</option>
         </select>
 
-        {/* --- CHANGE: Modified date fields to be vertical --- */}
         <label>Start date</label>
-        <input
-          style={{ ...inputStyle, width: "180px" }}
-          type="date"
-          value={form.startDate}
-          onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-        />
+        <input style={{ ...inputStyle, width: "180px" }} type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} />
 
         <label>End date</label>
-        <input
-          style={{ ...inputStyle, width: "180px" }}
-          type="date"
-          value={form.endDate}
-          onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
-        />
+        <input style={{ ...inputStyle, width: "180px" }} type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
 
         <label>Already received confirmation?</label>
         <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
           <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input type="radio" name="receivedConfirmation" checked={form.receivedConfirmation === "Yes"} onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "Yes" }))} />
-            Yes
+            <input type="radio" name="receivedConfirmation" checked={form.receivedConfirmation === "Yes"} onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "Yes" }))} /> Yes
           </label>
           <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <input type="radio" name="receivedConfirmation" checked={form.receivedConfirmation === "No"} onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "No", confirmationNumber: "" }))} />
-            No
+            <input type="radio" name="receivedConfirmation" checked={form.receivedConfirmation === "No"} onChange={() => setForm((f) => ({ ...f, receivedConfirmation: "No", confirmationNumber: "" }))} /> No
           </label>
         </div>
 
@@ -971,119 +757,24 @@ function ApplyForm({ user, profile, setShowApplyForm, reload }) {
         )}
 
         <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-          <button type="submit" disabled={submitting} style={applyBtn}>
-            {submitting ? "Submitting..." : "Submit Application"}
-          </button>
+          <button type="submit" disabled={submitting} style={applyBtn}>{submitting ? "Submitting..." : "Submit Application"}</button>
 
-          <button type="button" onClick={() => setShowApplyForm(false)} style={{ ...applyBtn, background: "#6c757d", marginLeft: 10 }}>
-            Cancel
-          </button>
+          <button type="button" onClick={() => setShowApplyForm(false)} style={{ ...applyBtn, background: "#6c757d", marginLeft: 10 }}>Cancel</button>
         </div>
       </form>
     </div>
   );
 }
 
-
-/* ---------- STYLES ---------- */
-const wrap = {
-  position: "fixed",
-  inset: 0,
-  display: "flex",
-  width: "100vw",
-  height: "100vh",
-  overflow: "hidden",
-};
-
-const leftPane = {
-  flex: "0 0 20%",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  paddingTop: 20,
-  background: "linear-gradient(180deg, #b7e4b7, #d3f0c2)",
-};
-
-const leftHeading = {
-  fontSize: "22px",
-  fontWeight: "700",
-  color: "#006400",
-  textAlign: "center",
-  marginTop: 10,
-  lineHeight: "1.3",
-};
-
-const rightPane = {
-  flex: "0 0 80%",
-  background: "#ffffff",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "flex-start",
-  overflowY: "auto",
-  overflowX: "hidden",
-  height: "100vh",
-};
-
-const profileCard = {
-  background: "#fff",
-  width: "85%",
-  marginTop: 30,
-  padding: 15,
-  borderRadius: 10,
-  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-  textAlign: "center",
-};
-
-const sideBtn = {
-  display: "block",
-  width: "100%",
-  padding: "10px 0",
-  marginTop: 10,
-  borderRadius: 6,
-  border: "none",
-  cursor: "pointer",
-  color: "white",
-  fontWeight: 600,
-  transition: "0.2s",
-};
-
-const card = {
-  background: "#fff",
-  padding: 25,
-  marginTop: 20,
-  borderRadius: 10,
-  boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
-};
-
-const table = {
-  width: "100%",
-  borderCollapse: "collapse",
-  marginTop: 10,
-};
-
-const thtd = {
-  padding: "10px",
-  borderBottom: "1px solid #ddd",
-  textAlign: "left",
-  verticalAlign: "top",
-};
-
-const inputStyle = {
-  display: "block",
-  width: "100%",
-  margin: "8px 0 15px 0",
-  padding: "10px 12px",
-  borderRadius: 6,
-  border: "1px solid #ccc",
-  fontSize: 14,
-};
-
-const applyBtn = {
-  background: "#006400",
-  color: "#fff",
-  border: "none",
-  borderRadius: 6,
-  padding: "10px 18px",
-  cursor: "pointer",
-  fontWeight: 600,
-};
+/* ---------- STYLES (kept same) ---------- */
+const wrap = { position: "fixed", inset: 0, display: "flex", width: "100vw", height: "100vh", overflow: "hidden" };
+const leftPane = { flex: "0 0 20%", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, background: "linear-gradient(180deg, #b7e4b7, #d3f0c2)" };
+const leftHeading = { fontSize: "22px", fontWeight: "700", color: "#006400", textAlign: "center", marginTop: 10, lineHeight: "1.3" };
+const rightPane = { flex: "0 0 80%", background: "#ffffff", display: "flex", flexDirection: "column", justifyContent: "flex-start", overflowY: "auto", overflowX: "hidden", height: "100vh" };
+const profileCard = { background: "#fff", width: "85%", marginTop: 30, padding: 15, borderRadius: 10, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", textAlign: "center" };
+const sideBtn = { display: "block", width: "100%", padding: "10px 0", marginTop: 10, borderRadius: 6, border: "none", cursor: "pointer", color: "white", fontWeight: 600, transition: "0.2s" };
+const card = { background: "#fff", padding: 25, marginTop: 20, borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" };
+const table = { width: "100%", borderCollapse: "collapse", marginTop: 10 };
+const thtd = { padding: "10px", borderBottom: "1px solid #ddd", textAlign: "left", verticalAlign: "top" };
+const inputStyle = { display: "block", width: "100%", margin: "8px 0 15px 0", padding: "10px 12px", borderRadius: 6, border: "1px solid #ccc", fontSize: 14 };
+const applyBtn = { background: "#006400", color: "#fff", border: "none", borderRadius: 6, padding: "10px 18px", cursor: "pointer", fontWeight: 600 };

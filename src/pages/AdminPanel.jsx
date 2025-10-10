@@ -16,6 +16,7 @@ import {
   deleteDoc,
   startAt,
   endAt,
+  startAfter,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -23,13 +24,16 @@ import logo from "../assets/transparent-logo.png";
 import { promoteTempCollege } from "../utils/promoteTempCollege";
 import useCurrentUser from "../hooks/useCurrentUser";
 
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 export default function AdminPanel() {
   const { user, userDoc } = useCurrentUser();
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const nav = useNavigate();
 
-  // views: "colleges_temp" | "applications" | "users" | "college_master"
+  // views: "colleges_temp" | "applications" | "users" | "college_master" | "current_trainees"
   const [view, setView] = useState("colleges_temp");
 
   // colleges_temp
@@ -52,7 +56,7 @@ export default function AdminPanel() {
 
   // college master
   const [collegeMasterList, setCollegeMasterList] = useState([]);
-  const [collegeSearch, setCollegeSearch] = useState(""); // <-- NEW search box state
+  const [collegeSearch, setCollegeSearch] = useState("");
   const [showCollegeForm, setShowCollegeForm] = useState(false);
   const [newCollege, setNewCollege] = useState({ name: "", address: "", email: "", contact: "" });
 
@@ -61,19 +65,188 @@ export default function AdminPanel() {
     if (!raw) return "-";
     try {
       // Firestore Timestamp has toDate()
-      if (raw.toDate && typeof raw.toDate === "function") {
-        return raw.toDate().toLocaleDateString();
+      if (raw?.toDate && typeof raw.toDate === "function") {
+        return raw.toDate().toLocaleString();
       }
       // If ISO string or Date
       const d = raw instanceof Date ? raw : new Date(raw);
       if (isNaN(d.getTime())) return String(raw);
-      return d.toLocaleDateString();
+      return d.toLocaleString();
     } catch (e) {
       return String(raw);
     }
   }
 
-  // Loaders for initial mount / view switch
+  // ----------------- FIRESTORE: fetch all docs helper (paged) -----------------
+  // Fetch entire collection (no limit) by paging in batches. Uses orderBy('__name__') + startAfter
+  async function fetchEntireCollection(collectionPath) {
+    const BATCH = 500; // safe batch size
+    const colRef = collection(db, collectionPath);
+    let all = [];
+    try {
+      let lastDoc = null;
+      while (true) {
+        let q;
+        if (lastDoc) {
+          q = query(colRef, orderBy("__name__"), startAfter(lastDoc), limit(BATCH));
+        } else {
+          q = query(colRef, orderBy("__name__"), limit(BATCH));
+        }
+        const snap = await getDocs(q);
+        if (!snap || snap.empty) break;
+        snap.docs.forEach((d) => all.push({ id: d.id, ...d.data() }));
+        lastDoc = snap.docs[snap.docs.length - 1];
+        // if less than batch, we are done
+        if (snap.docs.length < BATCH) break;
+      }
+    } catch (err) {
+      console.error("fetchEntireCollection error", collectionPath, err);
+      throw err;
+    }
+    return all;
+  }
+
+  // ----------------- EXPORT HELPERS -----------------
+  // Flatten object to simple key:value pairs (handles nested objects and timestamps)
+  function flattenForExport(obj) {
+    const out = {};
+
+    function recurse(prefix, val) {
+      // treat null/undefined as empty
+      if (val == null) {
+        out[prefix] = "";
+        return;
+      }
+
+      // Firestore Timestamp -> readable
+      if (val?.toDate && typeof val.toDate === "function") {
+        out[prefix] = formatDate(val);
+        return;
+      }
+      if (val instanceof Date) {
+        out[prefix] = val.toLocaleString();
+        return;
+      }
+      if (typeof val === "object" && !Array.isArray(val)) {
+        // nested object: expand keys
+        Object.keys(val).forEach((k) => {
+          const key = prefix ? `${prefix}.${k}` : k;
+          recurse(key, val[k]);
+        });
+        return;
+      }
+      // arrays stringify (attempt to make friendly)
+      if (Array.isArray(val)) {
+        out[prefix] = val
+          .map((it) => {
+            if (it == null) return "";
+            if (it?.toDate && typeof it.toDate === "function") return formatDate(it);
+            if (typeof it === "object") return JSON.stringify(it);
+            return String(it);
+          })
+          .join(", ");
+        return;
+      }
+      // primitive
+      out[prefix] = val;
+    }
+
+    // If obj is primitive, return single column
+    if (typeof obj !== "object" || obj === null) return { value: obj };
+
+    Object.keys(obj).forEach((k) => recurse(k, obj[k]));
+    return out;
+  }
+
+  // Build worksheet from array of records and download as Excel
+  function downloadExcel(records, filename = "export.xlsx") {
+    if (!records || records.length === 0) {
+      toast.info("No records to export.");
+      return;
+    }
+
+    // Flatten all records and union all keys to keep consistent columns
+    const flattened = records.map(flattenForExport);
+    const allKeys = Array.from(
+      flattened.reduce((set, rec) => {
+        Object.keys(rec).forEach((k) => set.add(k));
+        return set;
+      }, new Set())
+    );
+
+    // Build normalized rows (ensure each row has same columns)
+    const normalized = flattened.map((rec) =>
+      allKeys.reduce((acc, k) => {
+        acc[k] = rec[k] ?? "";
+        return acc;
+      }, {})
+    );
+
+    const ws = XLSX.utils.json_to_sheet(normalized, { header: allKeys });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    saveAs(blob, filename);
+  }
+
+  function timestampedFilename(prefix) {
+    const iso = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    return `${prefix}_${iso}.xlsx`;
+  }
+
+  // ----------------- EXPORT: entire collection logic -----------------
+  // For each view we map to a collection path. We fetch entire collection from server (not the in-memory slice).
+  async function exportEntireCollectionForView() {
+    if (!user || !userDoc || userDoc.role !== "admin") {
+      toast.error("Admin only");
+      return;
+    }
+
+    setWorking(true);
+    try {
+      if (view === "colleges_temp") {
+        const rows = await fetchEntireCollection("colleges_temp");
+        downloadExcel(rows, timestampedFilename("colleges_temp"));
+        return;
+      }
+
+      if (view === "applications") {
+        const rows = await fetchEntireCollection("applications");
+        downloadExcel(rows, timestampedFilename("applications"));
+        return;
+      }
+
+      if (view === "users") {
+        const rows = await fetchEntireCollection("users");
+        downloadExcel(rows, timestampedFilename("users"));
+        return;
+      }
+
+      if (view === "college_master") {
+        const rows = await fetchEntireCollection("colleges_master");
+        downloadExcel(rows, timestampedFilename("college_master"));
+        return;
+      }
+
+      if (view === "current_trainees") {
+        // maps to approvedapplications collection
+        const rows = await fetchEntireCollection("approvedapplications");
+        downloadExcel(rows, timestampedFilename("current_trainees"));
+        return;
+      }
+
+      toast.info("No export available for this view.");
+    } catch (err) {
+      console.error("exportEntireCollectionForView error", err);
+      toast.error("Export failed: " + (err.message || err.code || err));
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  // ----------------- LOADERS -----------------
   useEffect(() => {
     if (!userDoc || userDoc.role !== "admin") {
       setLoading(false);
@@ -86,6 +259,7 @@ export default function AdminPanel() {
         else if (view === "applications") await loadApplications();
         else if (view === "users") await loadUsers();
         else if (view === "college_master") await loadCollegeMaster(collegeSearch);
+        else if (view === "current_trainees") await loadCurrentTrainees();
       } catch (err) {
         console.error(err);
       } finally {
@@ -94,8 +268,6 @@ export default function AdminPanel() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDoc, view, showResolved]);
-
-  /* ===================== LOADERS ===================== */
 
   async function loadTemps() {
     try {
@@ -163,7 +335,6 @@ export default function AdminPanel() {
     }
   }
 
-  // 🔍 Load College Master with optional name prefix search
   async function loadCollegeMaster(term = "") {
     try {
       const base = collection(db, "colleges_master");
@@ -346,7 +517,6 @@ export default function AdminPanel() {
     }
   }
 
-
   /* ===================== USERS ACTIONS ===================== */
 
   async function updateUserRole(userItem, newRole) {
@@ -464,7 +634,6 @@ export default function AdminPanel() {
             👥 Users
           </button>
 
-          {/* CHANGED: shows the College Master list */}
           <button onClick={() => { setView("college_master"); loadCollegeMaster(collegeSearch); }} style={{ ...sideBtn, background: "#6f42c1" }}>
             🏫 College Master
           </button>
@@ -495,12 +664,22 @@ export default function AdminPanel() {
                   ? "Applications"
                   : view === "users"
                   ? "Users"
-                  : "College Master"}
+                  : view === "college_master"
+                  ? "College Master"
+                  : "Current Trainees"}
               </span>
             </h2>
 
-            <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button onClick={() => refreshCurrent()} style={{ ...applyBtn, marginRight: 8 }}>Refresh</button>
+              <button
+                onClick={() => exportEntireCollectionForView()}
+                style={{ ...applyBtn, background: "#0d6efd" }}
+                disabled={working}
+                title="Export the entire Firestore collection to Excel"
+              >
+                ⤓ Export Collection
+              </button>
             </div>
           </div>
 
@@ -515,7 +694,7 @@ export default function AdminPanel() {
 
               {temps.length === 0 ? <div>No pending submissions</div> : temps.map((t) => (
                 <div key={t.id} style={card}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-evenly", alignItems: "start", gap : 50 }}>
                     <div>
                       <h4 style={{ margin: 0 }}>
                         {t.name || "Unnamed college"}{" "}
@@ -661,8 +840,7 @@ export default function AdminPanel() {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontWeight: 700 }}>{u.name || u.email}</div>
-                          <div style={{ marginTop: 6 }}>Email: {u.email}</div>
-                          <div style={{ marginTop: 6, fontSize: 13 }}>Role: {u.role || "user"}</div>
+                          <div style={{ marginTop: 6, fontSize: 15 }}>Role: {u.role || "user"}</div>
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -717,7 +895,7 @@ export default function AdminPanel() {
               )}
             </div>
           )}
-          
+
           {/* ---------- VIEW: Current Trainees ---------- */}
           {view === "current_trainees" && (
             <div>
@@ -901,7 +1079,6 @@ export default function AdminPanel() {
 }
 
 /* ---------- STYLES ---------- */
-/* (unchanged) */
 const wrap = {
   position: "fixed",
   inset: 0,
