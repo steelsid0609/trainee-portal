@@ -583,7 +583,7 @@ export default function StudentProfile() {
   );
 }
 
-/* ---------- BASIC INFO FORM (no changes) ---------- */
+/* ---------- BASIC INFO FORM (no changes) --------- */
 function BasicInfoForm({ user, existingProfile, onCompleted }) {
   const [form, setForm] = useState({
     email: user?.email || existingProfile?.email || "",
