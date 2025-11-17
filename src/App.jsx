@@ -9,6 +9,8 @@ import FinishVerify from "./pages/FinishVerify";
 import AdminDashboard from "./pages/AdminPanel";
 import AdminRoute from "./routes/AdminRoute";
 import bgImage from "./assets/bg.jpg";
+import SupervisorRoute from "./routes/SupervisorRoute";
+import SupervisorPanel from "./pages/SupervisorPanel";
 
 /* ✅ Toastify imports */
 import { ToastContainer } from "react-toastify";
@@ -56,6 +58,16 @@ export default function App() {
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>
+            }
+          />
+
+          {/* Supervisor (protected) */}
+          <Route
+            path="/supervisor"
+            element={
+              <SupervisorRoute>
+                <SupervisorPanel />
+              </SupervisorRoute>
             }
           />
 

@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -88,11 +87,11 @@ export default function Login() {
 
       await ensureUserDoc(user);
 
-      // prefer role claim from ID token
+      // prefer role claim from ID token (for paid plan)
       const idTokenResult = await user.getIdTokenResult(true);
       let role = (idTokenResult.claims.role || "").toLowerCase();
 
-      // fallback to users/{uid}
+      // fallback to users/{uid} (for free plan)
       if (!role) {
         try {
           const userRef = doc(db, "users", user.uid);
@@ -108,10 +107,11 @@ export default function Login() {
 
       if (!role) role = "student";
 
-      // if user came to admin login page but is not admin -> reject sign-in and toast
-      if (intentRole === "admin" && role !== "admin") {
+      // --- CHANGE 1: Rejection Logic ---
+      // if user came to admin/supervisor login page but has wrong role -> reject
+      if (intentRole === "admin" && !["admin", "supervisor"].includes(role)) {
         await auth.signOut();
-        toast.error("This account is not an admin account.");
+        toast.error("This account is not an admin or supervisor account.");
         setLoading(false);
         return;
       }
@@ -125,10 +125,12 @@ export default function Login() {
         console.warn("Failed writing token to localStorage", e);
       }
 
-      // Redirect
+      // --- CHANGE 2: Redirect Logic ---
       if (role === "admin") nav("/admin");
+      else if (role === "supervisor") nav("/supervisor"); // Added supervisor redirect
       else if (role === "institute") nav("/institute/profile");
       else nav("/student/profile");
+
     } catch (err) {
       console.error("Login error:", err);
       toast.error(err.message || "Sign-in failed");
@@ -247,7 +249,8 @@ export default function Login() {
             </div>
           ) : !showRegister ? (
             <div style={card}>
-              <h2 style={{ marginBottom: 20 }}>{intentRole === "admin" ? "Admin Login" : intentRole === "institute" ? "Institute Login" : "Student Login"}</h2>
+              {/* --- CHANGE 3: UI Title --- */}
+              <h2 style={{ marginBottom: 20 }}>{intentRole === "admin" ? "Admin / Supervisor Login" : intentRole === "institute" ? "Institute Login" : "Student Login"}</h2>
 
               <form onSubmit={handleLogin}>
                 <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required style={input} />

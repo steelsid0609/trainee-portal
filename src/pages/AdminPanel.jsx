@@ -1,4 +1,3 @@
-// src/pages/AdminPanel.jsx
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { signOut, sendPasswordResetEmail } from "firebase/auth";
@@ -8,7 +7,7 @@ import {
   orderBy,
   getDocs,
   doc,
-  updateDoc,
+  updateDoc, // We are using this again
   addDoc,
   where,
   serverTimestamp,
@@ -18,6 +17,7 @@ import {
   endAt,
   startAfter,
 } from "firebase/firestore";
+// REMOVED: import { getFunctions, httpsCallable } from "firebase/functions";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/transparent-logo.png";
@@ -32,6 +32,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const nav = useNavigate();
+  // REMOVED: const functions = getFunctions(auth.app);
 
   // views: "colleges_temp" | "applications" | "users" | "college_master" | "current_trainees"
   const [view, setView] = useState("colleges_temp");
@@ -517,14 +518,24 @@ export default function AdminPanel() {
     }
   }
 
-  /* ===================== USERS ACTIONS ===================== */
+  /* ===================== USERS ACTIONS (REVERTED) ===================== */
 
   async function updateUserRole(userItem, newRole) {
     if (!window.confirm(`Change role of ${userItem.name || userItem.email} to "${newRole}"?`)) return;
     try {
+      // --- START: REVERTED CODE ---
+      // This is the "free plan" method.
+      // We are directly updating the user's document.
+      // The new firestore.rules will ALLOW this write *only* if the
+      // *caller* is an admin (by reading the caller's /users/ doc).
       await updateDoc(doc(db, "users", userItem.id), { role: newRole });
+      
       toast.success("Role updated.");
+      
+      // Reload the local user list
       await loadUsers();
+      // --- END: REVERTED CODE ---
+
     } catch (err) {
       console.error("updateUserRole error", err);
       toast.error("Failed to update role: " + (err.message || err.code));
@@ -853,13 +864,13 @@ export default function AdminPanel() {
                                   style={{ ...inputStyle, width: 180, margin: 0, padding: "8px 10px" }}
                                 >
                                   <option value="admin">admin</option>
-                                  <option value="institute">institute</option>
+                                  <option value="supervisor">supervisor</option> {/* This change is still needed */}
                                   <option value="student">student</option>
                                 </select>
                                 <button
                                   onClick={() => {
                                     if (!roleEditValue) return;
-                                    updateUserRole(u, roleEditValue);
+                                    updateUserRole(u, roleEditValue); // This now calls the reverted function
                                     setRoleEditId(null);
                                   }}
                                   style={applyBtn}
