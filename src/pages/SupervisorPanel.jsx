@@ -590,10 +590,10 @@ Two                     onToggle={() => setExpandedAppId(expandedAppId
 
           {view === "college_master" && (
             <div>
-    _           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
                 <input placeholder="Search colleges by name..." value={collegeSearch} onChange={(e) => setCollegeSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") loadCollegeMaster(collegeSearch); }} style={{ ...inputStyle, width: 360, margin: 0 }} />
                 <button onClick={() => loadCollegeMaster(collegeSearch)} style={applyBtn}>Search</button>
-    A           <button onClick={() => { setCollegeSearch(""); loadCollegeMaster(""); }} style={{ ...applyBtn, background: "#6c757d" }}>Clear</button>
+                <button onClick={() => { setCollegeSearch(""); loadCollegeMaster(""); }} style={{ ...applyBtn, background: "#6c757d" }}>Clear</button>
               </div>
 
               {collegeMasterList.length === 0 ? (
@@ -602,7 +602,7 @@ Two                     onToggle={() => setExpandedAppId(expandedAppId
                 collegeMasterList.map((c) => (
                   <div key={c.id} style={card}>
                     <div style={{ fontWeight: 600, fontSize: 16 }}>{c.name}</div>
-s                 <div style={{ fontSize: 14, color: "#444", marginTop: 4 }}>{c.address || "No address"}</div>
+                  <div style={{ fontSize: 14, color: "#444", marginTop: 4 }}>{c.address || "No address"}</div>
                     <div style={{ fontSize: 14, color: "#444", marginTop: 4 }}>{c.email || "No email"} | {c.contact || "No contact"}</div>
                   </div>
                 ))
